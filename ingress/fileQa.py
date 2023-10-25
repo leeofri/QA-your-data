@@ -9,18 +9,17 @@ from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Chroma
 from langchain.chat_models import ChatOpenAI
 from dotenv import load_dotenv
+from ingress.utiles import Translate
 
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 
 
 load_dotenv()
 
-from langchain.vectorstores import  Milvus
 from langchain.chains import RetrievalQA
 
-print("debug:", os.getenv("OPENAI_API_EMBEDDING_DEPLOYMENT_NAME"))
 
-class FileQA:
+class csvQA:
     def __init__(self,config:dict = {}):
         self.config = config
         self.embedding = None
@@ -28,16 +27,18 @@ class FileQA:
         self.llm = None
         self.qa = None
         self.retriever = None
+        self.translator = None
 
     def init_embeddings(self) -> None:
         # OPensource local emmbeding
         # create the open-source embedding function
         self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
         self.vectordb = Chroma(embedding_function=self.embedding)
+        self.translator = Translate()
 
-    def init_models(self) -> None:
-        # OpenAI GPT 3.5 API
-        self.llm = ChatOpenAI(temperature=0.)
+    # def init_models(self) -> None:
+    #     # # OpenAI GPT 3.5 API
+    #     self.llm = ChatOpenAI(temperature=0.)
         
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
         """
@@ -60,7 +61,16 @@ class FileQA:
         ##TODO: Validate if self.embedding is not None
         print("Creating vector db")
 
-        self.vectordb.from_documents(documents=documents,embedding=self.embedding,persist_directory='./data')
+        # map over all the docs and translate them
+        translated_docs = []
+        for doc in documents:
+            en_text = self.translator.translate_he_to_en(doc.text)
+            newDoc = Document(text=en_text,metadata=doc.metadata)
+            newDoc.metadata["he_text"] = doc.metadata["id"]
+            translated_docs.append()
+            
+
+        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
 
         # Append to each document new prop called pk and contain the id of the document
         # for doc in documents:
@@ -79,7 +89,10 @@ class FileQA:
         """
         Answer the question
         """
-        answer = self.qa.run(query=question,verbose=True)
+        en_question = self.translator.translate_he_to_en(question)
+        self.retriever = self.vectordb.as_retriever(search_kwargs={"k":10})
+        answer = self.retriever.get_relevant_documents(question)
+        
         return answer
     
     

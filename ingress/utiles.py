@@ -17,8 +17,11 @@ class Translate:
         argostranslate.package.install_from_path(package_to_install.download())
 
 
-    def translate(self, text:str) -> str:
+    def translate_he_to_en(self, text:str) -> str:
         return argostranslate.translate.translate(text, self.from_code, self.to_code)
+
+    def translate_en_to_he(self, text:str) -> str:
+        return argostranslate.translate.translate(text, "en", "he")
 
 
 

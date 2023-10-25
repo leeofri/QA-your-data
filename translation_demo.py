@@ -3,7 +3,7 @@
 
 import argostranslate.package
 import argostranslate.translate
-from bidi.algorithm import get_display # for correct display of Hebrew
+# from bidi.algorithm import get_display # for correct display of Hebrew
 
 from_code = "he"
 to_code = "en"
