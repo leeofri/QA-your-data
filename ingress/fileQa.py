@@ -7,7 +7,6 @@ from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter, MarkdownTextSplitter, RecursiveCharacterTextSplitter, Language
 from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Chroma
-from langchain.chat_models import ChatOpenAI
 from dotenv import load_dotenv
 from ingress.utiles import Translate
 
@@ -33,7 +32,7 @@ class csvQA:
         # OPensource local emmbeding
         # create the open-source embedding function
         self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-        self.vectordb = Chroma(embedding_function=self.embedding)
+        self.vectordb = Chroma(embedding_function=self.embedding,persist_directory='./data')
         self.translator = Translate()
 
     # def init_models(self) -> None:
@@ -47,10 +46,7 @@ class csvQA:
 
         file_path = self.config.get("file_path",None)
         # vector_db_host = self.config.get("vector_db_host","localhost")
-        documents = CSVLoader.load(
-            file_path=file_path,
-            # space_key=os.getenv("CONFLUENCE_SPACE_KEY"
-        )
+        documents = CSVLoader(file_path=file_path).load()
             
         print("Loaded {0} documents".format(len(documents)))
 
@@ -64,14 +60,15 @@ class csvQA:
         # map over all the docs and translate them
         translated_docs = []
         for doc in documents:
-            en_text = self.translator.translate_he_to_en(doc.text)
-            newDoc = Document(text=en_text,metadata=doc.metadata)
-            newDoc.metadata["he_text"] = doc.metadata["id"]
-            translated_docs.append()
+            en_text = self.translator.translate_he_to_en(doc.page_content)
+            newDoc = Document(page_content=en_text,metadata=doc.metadata)
+            newDoc.metadata["he_text"] = doc.page_content
+            translated_docs.append(newDoc)
             
 
         self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
 
+        self.vectordb
         # Append to each document new prop called pk and contain the id of the document
         # for doc in documents:
         #     doc.metadata["pk"] = doc.metadata["id"]
@@ -90,9 +87,13 @@ class csvQA:
         Answer the question
         """
         en_question = self.translator.translate_he_to_en(question)
-        self.retriever = self.vectordb.as_retriever(search_kwargs={"k":10})
-        answer = self.retriever.get_relevant_documents(question)
-        
-        return answer
-    
+        print(en_question)
+
+        print("collection:" , self.vectordb._collection.count() )
+        results = self.vectordb.similarity_search(en_question)
+
+        map(lambda x: print(x.page_content),results)
+
+        return results
+
     
