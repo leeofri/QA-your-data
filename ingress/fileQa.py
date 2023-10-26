@@ -7,20 +7,18 @@ from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter, MarkdownTextSplitter, RecursiveCharacterTextSplitter, Language
 from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Chroma
-from langchain.chat_models import ChatOpenAI
 from dotenv import load_dotenv
+from ingress.utiles import Translate
 
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 
 
 load_dotenv()
 
-from langchain.vectorstores import  Milvus
 from langchain.chains import RetrievalQA
 
-print("debug:", os.getenv("OPENAI_API_EMBEDDING_DEPLOYMENT_NAME"))
 
-class FileQA:
+class csvQA:
     def __init__(self,config:dict = {}):
         self.config = config
         self.embedding = None
@@ -28,16 +26,18 @@ class FileQA:
         self.llm = None
         self.qa = None
         self.retriever = None
+        self.translator = None
 
     def init_embeddings(self) -> None:
         # OPensource local emmbeding
         # create the open-source embedding function
         self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-        self.vectordb = Chroma(embedding_function=self.embedding)
+        self.vectordb = Chroma(embedding_function=self.embedding,persist_directory='./data')
+        self.translator = Translate()
 
-    def init_models(self) -> None:
-        # OpenAI GPT 3.5 API
-        self.llm = ChatOpenAI(temperature=0.)
+    # def init_models(self) -> None:
+    #     # # OpenAI GPT 3.5 API
+    #     self.llm = ChatOpenAI(temperature=0.)
         
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
         """
@@ -46,10 +46,7 @@ class FileQA:
 
         file_path = self.config.get("file_path",None)
         # vector_db_host = self.config.get("vector_db_host","localhost")
-        documents = CSVLoader.load(
-            file_path=file_path,
-            # space_key=os.getenv("CONFLUENCE_SPACE_KEY"
-        )
+        documents = CSVLoader(file_path=file_path).load()
             
         print("Loaded {0} documents".format(len(documents)))
 
@@ -60,8 +57,18 @@ class FileQA:
         ##TODO: Validate if self.embedding is not None
         print("Creating vector db")
 
-        self.vectordb.from_documents(documents=documents,embedding=self.embedding,persist_directory='./data')
+        # map over all the docs and translate them
+        translated_docs = []
+        for doc in documents:
+            en_text = self.translator.translate_he_to_en(doc.page_content)
+            newDoc = Document(page_content=en_text,metadata=doc.metadata)
+            newDoc.metadata["he_text"] = doc.page_content
+            translated_docs.append(newDoc)
+            
 
+        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
+
+        self.vectordb
         # Append to each document new prop called pk and contain the id of the document
         # for doc in documents:
         #     doc.metadata["pk"] = doc.metadata["id"]
@@ -79,7 +86,14 @@ class FileQA:
         """
         Answer the question
         """
-        answer = self.qa.run(query=question,verbose=True)
-        return answer
-    
+        en_question = self.translator.translate_he_to_en(question)
+        print(en_question)
+
+        print("collection:" , self.vectordb._collection.count() )
+        results = self.vectordb.similarity_search(en_question)
+
+        map(lambda x: print(x.page_content),results)
+
+        return results
+
     
