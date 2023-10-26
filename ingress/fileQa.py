@@ -9,9 +9,11 @@ from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Chroma
 from dotenv import load_dotenv
 from ingress.utiles import Translate
+from langchain.llms import LlamaCpp
+from langchain.chains import RetrievalQAWithSourcesChain
 
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
-
+debug = True
 
 load_dotenv()
 
@@ -25,7 +27,6 @@ class csvQA:
         self.vectordb = None
         self.llm = None
         self.qa = None
-        self.retriever = None
         self.translator = None
 
     def init_embeddings(self) -> None:
@@ -38,7 +39,47 @@ class csvQA:
     # def init_models(self) -> None:
     #     # # OpenAI GPT 3.5 API
     #     self.llm = ChatOpenAI(temperature=0.)
+
+    def init_llm(self) -> None:
+        self.llm = LlamaCpp(
+            model_path="/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf",
+            temperature=0.5,
+            max_tokens=512,
+            top_p=1,
+            n_batch=1,
+            n_ctx=1024,
+            # callback_manager=callback_manager,
+            verbose=True
+            )
         
+        template = """
+        you are summerize events system, please answer the question
+        following this rules when generating and answer:
+        - Always prioritize the context for question ansering 
+        - Make it short and clear
+        =========
+        context : {context}
+        Quesion of the user : {question}
+        =========
+       answer: 
+        """
+
+        PROMPT = PromptTemplate(
+            template=template, input_variables=["context", "question"]
+        )
+
+        chain_type_kwargs = {"prompt": PROMPT}
+        retriever = self.vectordb.as_retriever(search_kwargs={"k":3})
+
+        self.chain = RetrievalQA.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=retriever,
+            chain_type_kwargs=chain_type_kwargs,
+            return_source_documents=True,
+            verbose=True,
+        )
+   
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
         """
         creates vector db for the embeddings and persists them or loads a vector db from the persist directory
@@ -68,20 +109,6 @@ class csvQA:
 
         self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
 
-        self.vectordb
-        # Append to each document new prop called pk and contain the id of the document
-        # for doc in documents:
-        #     doc.metadata["pk"] = doc.metadata["id"]
-
-        # self.vectordb.from_documents(documents=texts)
-    def retreival_qa_chain(self):
-        """
-        Creates retrieval qa chain using vectordb as retrivar and LLM to complete the prompt
-        """
-        ##TODO: Use custom prompt
-        self.retriever = self.vectordb.as_retriever(search_kwargs={"k":4})
-        self.qa = RetrievalQA.from_chain_type(llm=self.llm, chain_type="stuff",retriever=self.retriever)
-
     def answer_question(self,question:str) ->str:
         """
         Answer the question
@@ -92,8 +119,12 @@ class csvQA:
         print("collection:" , self.vectordb._collection.count() )
         results = self.vectordb.similarity_search(en_question)
 
-        map(lambda x: print(x.page_content),results)
-
         return results
-
+    
+    def retreival_qa_chain(self,question) -> None:
+        en_question = self.translator.translate_he_to_en(question)
+        res = self.chain({"query":en_question})
+        print(res)
+        # he_result = self.translator.translate_en_to_he(en_result)
+        # return he_result
     
