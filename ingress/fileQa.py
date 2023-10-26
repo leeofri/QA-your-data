@@ -31,7 +31,7 @@ class csvQA:
     def init_embeddings(self) -> None:
         # OPensource local emmbeding
         # create the open-source embedding function
-        self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2") #TODO: try also sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
         self.vectordb = Chroma(embedding_function=self.embedding,persist_directory='./data')
         self.translator = Translate()
 
@@ -90,7 +90,7 @@ class csvQA:
         print(en_question)
 
         print("collection:" , self.vectordb._collection.count() )
-        results = self.vectordb.similarity_search(en_question)
+        results = self.vectordb.similarity_search(en_question, )
 
         map(lambda x: print(x.page_content),results)
 
