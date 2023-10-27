@@ -10,7 +10,12 @@ from langchain.vectorstores import Chroma
 from dotenv import load_dotenv
 from ingress.utiles import Translate
 from langchain.llms import LlamaCpp
-from langchain.chains import RetrievalQAWithSourcesChain
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from langchain.schema import (
+    AIMessage,
+    BaseMessage
+)
 
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 debug = True
@@ -76,10 +81,19 @@ class csvQA:
             chain_type="stuff",
             retriever=retriever,
             chain_type_kwargs=chain_type_kwargs,
-            return_source_documents=True,
             verbose=True,
         )
-   
+
+
+        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+
+        self.chat = ConversationalRetrievalChain.from_llm( 
+            self.llm,  
+            retriever, 
+            memory=self.memory,
+            verbose=True,
+            )
+        
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
         """
         creates vector db for the embeddings and persists them or loads a vector db from the persist directory
@@ -121,10 +135,30 @@ class csvQA:
 
         return results
     
-    def retreival_qa_chain(self,question) -> None:
+    def retreival_qa_chain(self,question,history) -> None:
         en_question = self.translator.translate_he_to_en(question)
-        res = self.chain({"query":en_question})
-        print(res)
-        # he_result = self.translator.translate_en_to_he(en_result)
-        # return he_result
+        res = self.chain({"query":en_question,history:history})
+        print("en:",res["result"])
+        he_result = self.translator.translate_en_to_he(res["result"])
+        print("he:",he_result)
+        return he_result
+    
+    def chat_with_history(self,meg:str) -> AIMessage:
+        """
+        Answer the question in a chat with history
+        """
+        print({"question": meg})
+        he_query = meg
+        en_query = self.translator.translate_he_to_en(he_query)
+
+        print({"en question": en_query})
+
+        result = self.chat({"question": en_query})
+
+        print("en:",result)
+
+        he_result = self.translator.translate_en_to_he(result["answer"])
+
+        return AIMessage(content=he_result)
+        
     
