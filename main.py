@@ -3,6 +3,7 @@ import resource
 import streamlit as st
 from dotenv import load_dotenv
 import os
+import json
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import (
@@ -61,6 +62,7 @@ def main():
                 response = app.chat_with_history(st.session_state.messages[-1].content)
             st.session_state.messages.append(
                 AIMessage(content=response.content))
+            st.json(json.dumps([ob.__dict__ for ob in response.source_documents]))
 
     # display message history
     messages = st.session_state.get('messages', [])
@@ -69,6 +71,7 @@ def main():
             st.chat_message("user").write(msg.content)
         else:
             st.chat_message("assistant").write(msg.content)
+                
 
 
 if __name__ == '__main__':

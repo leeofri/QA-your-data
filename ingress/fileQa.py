@@ -58,10 +58,11 @@ class csvQA:
             )
         
         template = """
-        you are summerize events system, please answer the question
+        you are army command and control summerize events system, please answer the question
         following this rules when generating and answer:
-        - Always prioritize the context for question ansering 
-        - Make it short and clear
+        - Use only the data from the context
+        - the answer should contain a update about the events in the context
+        - mention the Sender and Destination of the source events in the answer
         =========
         context : {context}
         Quesion of the user : {question}
@@ -74,7 +75,10 @@ class csvQA:
         )
 
         chain_type_kwargs = {"prompt": PROMPT}
-        retriever = self.vectordb.as_retriever(search_kwargs={"k":3})
+        retriever = self.vectordb.as_retriever(
+            search_kwargs={"k":6},
+            
+            )
 
         self.chain = RetrievalQA.from_chain_type(
             llm=self.llm,
@@ -82,16 +86,18 @@ class csvQA:
             retriever=retriever,
             chain_type_kwargs=chain_type_kwargs,
             verbose=True,
+
         )
 
 
-        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+        self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
 
         self.chat = ConversationalRetrievalChain.from_llm( 
             self.llm,  
             retriever, 
             memory=self.memory,
             verbose=True,
+            return_source_documents=True,
             )
         
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
@@ -159,6 +165,4 @@ class csvQA:
 
         he_result = self.translator.translate_en_to_he(result["answer"])
 
-        return AIMessage(content=he_result)
-        
-    
+        return AIMessage(content=he_result,source_documents=result["source_documents"])
