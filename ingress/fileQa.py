@@ -61,7 +61,7 @@ class csvQA:
         you are army command and control summerize events system, please answer the question
         following this rules when generating and answer:
         - Use only the data from the context, the context is list of events
-        - the answer should contain a update about the events in the context
+        - the answer should contain a update about the events in the context in chronological order
         - mention the Sender and Destination of the source events in the answer
         =========
         context : {context}
