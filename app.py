@@ -15,4 +15,4 @@ print("start init LLM models ")
 app.init_llm()
 
 print("start answer_question")
-print(app.retreival_qa_chain("אירועים בשער צפון איזה היו?"))
+print(app.retreival_qa_chain("אירועים בשער צפון איזה היו?", history=''))

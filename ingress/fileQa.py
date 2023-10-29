@@ -47,7 +47,7 @@ class csvQA:
 
     def init_llm(self) -> None:
         self.llm = LlamaCpp(
-            model_path="/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf",
+            model_path="/home/simulator/Desktop/CombatAI/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf",
             temperature=0.5,
             max_tokens=512,
             top_p=1,
