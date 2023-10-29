@@ -1,5 +1,9 @@
 from ingress.fileQa import csvQA
 import sys
+import csv
+import datetime
+
+from bidi.algorithm import get_display # for correct display of Hebrew
 
 print("start")
 app = csvQA(config={"file_path": "./data/Hebrew_reports.csv"})
@@ -15,4 +19,21 @@ print("start init LLM models ")
 app.init_llm()
 
 print("start answer_question")
-print(app.retreival_qa_chain("אירועים בשער צפון איזה היו?", history=''))
+import sys
+
+question = input("Enter your question: ")
+history = ''
+
+chain = app.retreival_qa_chain(question, history=history)
+print(get_display(chain))
+
+history = f'{question}\n{chain}\n'
+
+while True:
+    question = input("Enter your question: ")
+    chain = app.retreival_qa_chain(question, history=history)
+    print(get_display(chain))
+    history += f'{question}\n{chain}\n'
+
+    if question.lower() == "stop" or question.lower() == "exit":
+        break
