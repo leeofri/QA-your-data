@@ -32,3 +32,13 @@ python3 app.py load # for load data and preform sematic search
 python3 app.py just sematic search on persist data in /data
 ```
 
+## run UI - 
+```
+streamlit run main.py --logger.level debug
+```
+
+
+## eamples
+סכם את האירועים בבסיס בברמינגטון
+תאר לי את החשוד
+מי שלח אותו לבסיס

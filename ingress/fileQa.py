@@ -10,7 +10,12 @@ from langchain.vectorstores import Chroma
 from dotenv import load_dotenv
 from ingress.utiles import Translate
 from langchain.llms import LlamaCpp
-from langchain.chains import RetrievalQAWithSourcesChain
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+from langchain.schema import (
+    AIMessage,
+    BaseMessage
+)
 
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 debug = True
@@ -53,10 +58,11 @@ class csvQA:
             )
         
         template = """
-        you are summerize events system, please answer the question
+        you are army command and control summerize events system, please answer the question
         following this rules when generating and answer:
-        - Always prioritize the context for question ansering 
-        - Make it short and clear
+        - Use only the data from the context, the context is list of events
+        - the answer should contain a update about the events in the context in chronological order
+        - mention the Sender and Destination of the source events in the answer
         =========
         context : {context}
         Quesion of the user : {question}
@@ -69,17 +75,31 @@ class csvQA:
         )
 
         chain_type_kwargs = {"prompt": PROMPT}
-        retriever = self.vectordb.as_retriever(search_kwargs={"k":3})
+        retriever = self.vectordb.as_retriever(
+            search_kwargs={"k":6},
+            
+            )
 
         self.chain = RetrievalQA.from_chain_type(
             llm=self.llm,
             chain_type="stuff",
             retriever=retriever,
             chain_type_kwargs=chain_type_kwargs,
-            return_source_documents=True,
             verbose=True,
+
         )
-   
+
+
+        self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
+
+        self.chat = ConversationalRetrievalChain.from_llm( 
+            self.llm,  
+            retriever, 
+            memory=self.memory,
+            verbose=True,
+            return_source_documents=True,
+            )
+        
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
         """
         creates vector db for the embeddings and persists them or loads a vector db from the persist directory
@@ -121,10 +141,28 @@ class csvQA:
 
         return results
     
-    def retreival_qa_chain(self,question) -> None:
+    def retreival_qa_chain(self,question,history) -> None:
         en_question = self.translator.translate_he_to_en(question)
-        res = self.chain({"query":en_question})
-        print(res)
-        # he_result = self.translator.translate_en_to_he(en_result)
-        # return he_result
+        res = self.chain({"query":en_question,history:history})
+        print("en:",res["result"])
+        he_result = self.translator.translate_en_to_he(res["result"])
+        print("he:",he_result)
+        return he_result
     
+    def chat_with_history(self,meg:str) -> AIMessage:
+        """
+        Answer the question in a chat with history
+        """
+        print({"question": meg})
+        he_query = meg
+        en_query = self.translator.translate_he_to_en(he_query)
+
+        print({"en question": en_query})
+
+        result = self.chat({"question": en_query})
+
+        print("en:",result)
+
+        he_result = self.translator.translate_en_to_he(result["answer"])
+
+        return AIMessage(content=he_result,source_documents=result["source_documents"])
