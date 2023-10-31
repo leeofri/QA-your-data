@@ -37,7 +37,7 @@ class csvQA:
     def init_embeddings(self) -> None:
         # OPensource local emmbeding
         # create the open-source embedding function
-        self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embedding =  SentenceTransformerEmbeddings(model_name="paraphrase-multilingual-MiniLM-L12-v2")
         self.vectordb = Chroma(embedding_function=self.embedding,persist_directory='./data')
         self.translator = Translate()
 
@@ -47,12 +47,13 @@ class csvQA:
 
     def init_llm(self) -> None:
         self.llm = LlamaCpp(
-            model_path="/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf",
+            model_path="/home/simulator/Desktop/CombatAI/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf",#"/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf",
             temperature=0.5,
-            max_tokens=512,
+            max_tokens=2048,
             top_p=1,
             n_batch=1,
-            n_ctx=1024,
+            n_ctx=2048,
+            top_k=5,
             # callback_manager=callback_manager,
             verbose=True
             )
@@ -121,31 +122,32 @@ class csvQA:
         # map over all the docs and translate them
         translated_docs = []
         for doc in documents:
-            en_text = self.translator.translate_he_to_en(doc.page_content)
-            newDoc = Document(page_content=en_text,metadata=doc.metadata)
-            newDoc.metadata["he_text"] = doc.page_content
-            translated_docs.append(newDoc)
+            # en_text = self.translator.translate_he_to_en(doc.page_content)
+            # newDoc = Document(page_content=en_text,metadata=doc.metadata)
+            doc.metadata["he_text"] = doc.page_content # newDoc.metadata["he_text"] = doc.page_content
+            # translated_docs.append(newDoc)
             
 
-        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
+        self.vectordb.from_documents(documents=documents,embedding=self.embedding,persist_directory='./data') # 
+        # self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
 
     def answer_question(self,question:str) ->str:
         """
         Answer the question
         """
-        en_question = self.translator.translate_he_to_en(question)
-        print(en_question)
+        # en_question = self.translator.translate_he_to_en(question)
+        # print(en_question)
 
         print("collection:" , self.vectordb._collection.count() )
-        results = self.vectordb.similarity_search(en_question)
+        results = self.vectordb.similarity_search(question)# results = self.vectordb.similarity_search(en_question)
 
         return results
     
     def retreival_qa_chain(self,question,history) -> None:
-        en_question = self.translator.translate_he_to_en(question)
-        res = self.chain({"query":en_question,history:history})
-        print("en:",res["result"])
-        he_result = self.translator.translate_en_to_he(res["result"])
+        # en_question = self.translator.translate_he_to_en(question)
+        res = self.chain({"query":question,history:history})# res = self.chain({"query":en_question,history:history})
+        # print("en:",res["result"])
+        he_result = res["result"] # he_result = self.translator.translate_en_to_he(res["result"])
         print("he:",he_result)
         return he_result
     
@@ -159,9 +161,9 @@ class csvQA:
 
         print({"en question": en_query})
 
-        result = self.chat({"question": en_query})
+        result = self.chat({"question": he_query}) # result = self.chat({"question": en_query})
 
-        print("en:",result)
+        print("he:", result) # print("en:",result)
 
         he_result = self.translator.translate_en_to_he(result["answer"])
 
