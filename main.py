@@ -15,7 +15,7 @@ from langchain.schema import (
 from ingress.fileQa import csvQA
 import sys
 
-app = csvQA(config={"file_path": "./data/Hebrew_reports.csv"})
+app = csvQA(config={"file_path": "/home/simulator/Desktop/CombatAI/QA-your-data/data/ynet_cleaned.csv"})
 
 def init():
     # Load the OpenAI API key from the environment variable

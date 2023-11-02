@@ -1,14 +1,16 @@
 import json
 import os
 import re
+import torch
 from typing import Iterable, List
+from transformers import AutoTokenizer, pipeline, AutoModelForCausalLM
 from langchain.docstore.document import Document
 from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter, MarkdownTextSplitter, RecursiveCharacterTextSplitter, Language
 from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Chroma
 from dotenv import load_dotenv
-from ingress.utiles import Translate
+from ingress.utiles import Translate, llm_pipeline
 from langchain.llms import LlamaCpp
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
@@ -45,19 +47,27 @@ class csvQA:
     #     # # OpenAI GPT 3.5 API
     #     self.llm = ChatOpenAI(temperature=0.)
 
-    def init_llm(self) -> None:
-        self.llm = LlamaCpp(
-            model_path="/home/simulator/Desktop/CombatAI/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf",#"/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf",
-            temperature=0.5,
-            max_tokens=2048,
-            top_p=1,
-            n_batch=1,
-            n_ctx=2048,
-            top_k=5,
-            # callback_manager=callback_manager,
-            verbose=True
+    def init_llm(self, use_gpu: bool = True) -> None:
+        if torch.cuda.is_available() and use_gpu:
+            model = AutoModelForCausalLM.from_pretrained("/home/simulator/Desktop/CombatAI/models/dolphin-2.1-mistral-7b/", load_in_4bit=True)
+            tokenizer = AutoTokenizer.from_pretrained("/home/simulator/Desktop/CombatAI/models/dolphin-2.1-mistral-7b/")
+            self.llm = llm_pipeline(model=model,tokenizer=tokenizer)
+
+            
+        else:
+            from langchain.llms import LlamaCpp
+
+            self.llm = LlamaCpp(
+                model_path="/home/simulator/Desktop/CombatAI/models/mistral-7b-instruct-v0.1.Q4_K_M.gguf",
+                temperature=0.5,
+                max_tokens=2048,
+                top_p=0.95,
+                n_batch=1,
+                n_ctx=4096,
+                top_k=5,
+                verbose=True,
             )
-        
+
         template = """
         you are army command and control summerize events system, please answer the question
         following this rules when generating and answer:
@@ -77,9 +87,8 @@ class csvQA:
 
         chain_type_kwargs = {"prompt": PROMPT}
         retriever = self.vectordb.as_retriever(
-            search_kwargs={"k":6},
-            
-            )
+            search_kwargs={"k": 6},
+        )
 
         self.chain = RetrievalQA.from_chain_type(
             llm=self.llm,
@@ -87,19 +96,22 @@ class csvQA:
             retriever=retriever,
             chain_type_kwargs=chain_type_kwargs,
             verbose=True,
-
         )
 
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            output_key="answer",
+            input_key="question",
+            return_messages=True,
+        )
 
-        self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
-
-        self.chat = ConversationalRetrievalChain.from_llm( 
-            self.llm,  
-            retriever, 
+        self.chat = ConversationalRetrievalChain.from_llm(
+            self.llm,
+            retriever,
             memory=self.memory,
             verbose=True,
             return_source_documents=True,
-            )
+        )
         
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
         """

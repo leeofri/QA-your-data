@@ -1,5 +1,8 @@
 import argostranslate.package
 import argostranslate.translate
+import re
+from langchain.llms  import HuggingFacePipeline
+from transformers import pipeline
 
 class Translate:
     def __init__(self, from_code:str = 'en', to_code:str = 'he'):
@@ -33,3 +36,16 @@ class Translate:
 
 
 Translate().translate_en_to_he("I want to eat apple pie and drink hot tea")
+
+def llm_pipeline(model,tokenizer):
+    pipe=pipeline(
+        'text2text-generation',
+        model=model,
+        tokenizer=tokenizer,
+        temperature=0.5, 
+        max_length=2048,
+        do_sample=True,
+        top_p=0.95
+    )
+    local_llm=HuggingFacePipeline(pipeline=pipe)
+    return local_llm
