@@ -34,7 +34,7 @@ def init():
 
     # setup streamlit page
     st.set_page_config(
-        page_title="ReportAI",
+        page_title="CombatAI",
         page_icon="🤖"
     )
 
@@ -48,7 +48,7 @@ def main():
             SystemMessage(content="You are a helpful assistant.")
         ]
 
-    st.header("ReportAI 🤖")
+    st.header("CombatAI 🤖")
 
     # sidebar with user input
     with st.sidebar:

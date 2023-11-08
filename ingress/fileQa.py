@@ -1,12 +1,11 @@
 import json
 import os
 import re
-from typing import Iterable, List
 from langchain.docstore.document import Document
 from langchain.document_loaders import CSVLoader
 from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter, MarkdownTextSplitter, RecursiveCharacterTextSplitter, Language
 from langchain.prompts import PromptTemplate
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import Redis
 from dotenv import load_dotenv
 from ingress.utiles import Translate
 from langchain.llms import LlamaCpp
@@ -24,7 +23,6 @@ load_dotenv()
 
 from langchain.chains import RetrievalQA
 
-
 class csvQA:
     def __init__(self,config:dict = {}):
         self.config = config
@@ -34,11 +32,16 @@ class csvQA:
         self.qa = None
         self.translator = None
 
+    def download_embedding_module(self):
+        self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        print("embdding cache folder:",self.embedding.cache_folder)
+
     def init_embeddings(self) -> None:
         # OPensource local emmbeding
         # create the open-source embedding function
-        self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-        self.vectordb = Chroma(embedding_function=self.embedding,persist_directory='./data')
+        if self.embedding is None:
+            self.download_embedding_module()
+        self.vectordb = Redis(index_name="reports",embedding=self.embedding,redis_url=os.environ.get("DATABASE_URL", "redis://localhost:6379"))
         self.translator = Translate()
 
     # def init_models(self) -> None:
@@ -47,24 +50,25 @@ class csvQA:
 
     def init_llm(self) -> None:
         self.llm = LlamaCpp(
-            model_path="/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf",
-            temperature=0.5,
-            max_tokens=512,
+            model_path=os.environ.get("MODEL_PATH", "/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf"),
+            temperature=0.8,
+            max_tokens=1024,
             top_p=1,
-            n_batch=1,
+            n_batch=100,
             n_ctx=1024,
+            n_threads=32,
             # callback_manager=callback_manager,
             verbose=True
             )
         
         template = """
-        you are army command and control summerize events system, please answer the question
+        you are army command and control summerize reports system, please answer the question
         following this rules when generating and answer:
-        - Use only the data from the context, the context is list of events
-        - the answer should contain a update about the events in the context in chronological order
+        - Use only the data from the reports log
+        - the answer contain event from reports log in chronological order
         - mention the Sender and Destination of the source events in the answer
         =========
-        context : {context}
+        reports log : {context}
         Quesion of the user : {question}
         =========
        answer: 
@@ -79,14 +83,13 @@ class csvQA:
             search_kwargs={"k":6},
             
             )
-
+        
         self.chain = RetrievalQA.from_chain_type(
             llm=self.llm,
             chain_type="stuff",
             retriever=retriever,
             chain_type_kwargs=chain_type_kwargs,
             verbose=True,
-
         )
 
 
@@ -98,6 +101,7 @@ class csvQA:
             memory=self.memory,
             verbose=True,
             return_source_documents=True,
+            callbacks=[]
             )
         
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
@@ -107,7 +111,7 @@ class csvQA:
 
         file_path = self.config.get("file_path",None)
         # vector_db_host = self.config.get("vector_db_host","localhost")
-        documents = CSVLoader(file_path=file_path).load()
+        documents = CSVLoader(file_path=file_path,).load()
             
         print("Loaded {0} documents".format(len(documents)))
 
@@ -126,7 +130,6 @@ class csvQA:
             newDoc.metadata["he_text"] = doc.page_content
             translated_docs.append(newDoc)
             
-
         self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
 
     def answer_question(self,question:str) ->str:

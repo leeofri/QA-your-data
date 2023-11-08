@@ -1,0 +1,39 @@
+services:
+  redis:
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6379:6379"
+    # volumes:
+    #     - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "localhost", "-p", "6379", "ping"]
+      interval: 2s
+      timeout: 1m30s
+      retries: 5
+      start_period: 5s
+
+  langchain-chat-app:
+    image: langchain-chat-app:latest
+    build: ./
+    command: chainlit run main_chainlid.py
+    volumes:
+    - ./models/:/modles/
+    ports:
+    - 8000:8000
+    environment:
+      - DATABASE_URL=redis://redis:6379
+      - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
+
+  embdding-api:
+    image: quay.io/go-skynet/local-ai:latest
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    volumes:
+      - ./models:/models:cached
+    command: ["/usr/bin/local-ai"]
+
+  vllm-api:
+    
+

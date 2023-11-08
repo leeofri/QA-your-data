@@ -39,6 +39,30 @@ streamlit run main.py --logger.level debug
 
 
 ## eamples
-סכם את האירועים בבסיס בברמינגטון
+ספר לי על האירועים בבסיס בברמינגטון
 תאר לי את החשוד
 מי שלח אותו לבסיס
+
+
+## ssh
+```
+ssh ec2-user@10.3.19.11 -L 2222:10.3.19.11:22
+scp -P 2222 ~/Code/QA-your-data ec2-user@localhost:
+```
+
+turnnnlingn
+```
+aws --profile General-Admin-PS-127977499263 ssm start-session --target i-081a949ee752c7450 --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters host="localhost",portNumber="80",localPortNumber="80"
+```
+
+
+
+curl http://localhost:8080/models/apply -H "Content-Type: application/json" -d '{
+    "id" : "mistral"
+   }'
+
+curl http://localhost:8080/v1/chat/completions -H "Content-Type: application/json" -d '{
+    "model": "mistral",
+    "messages": [{"role": "user", "content": "How are you?"}],
+    "temperature": 0.9 
+}'
