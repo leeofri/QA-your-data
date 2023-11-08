@@ -36,13 +36,16 @@ class csvQA:
         self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
         print("embdding cache folder:",self.embedding.cache_folder)
 
+    def init_transalte(self):
+        self.translator = Translate()
+
     def init_embeddings(self) -> None:
         # OPensource local emmbeding
         # create the open-source embedding function
         if self.embedding is None:
             self.download_embedding_module()
         self.vectordb = Redis(index_name="reports",embedding=self.embedding,redis_url=os.environ.get("DATABASE_URL", "redis://localhost:6379"))
-        self.translator = Translate()
+        self.init_transalte()
 
     # def init_models(self) -> None:
     #     # # OpenAI GPT 3.5 API

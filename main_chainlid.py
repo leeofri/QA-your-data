@@ -30,27 +30,24 @@ async def on_chat_start():
     print("start init LLM models ")
     app.init_llm()
 
-    app.translator.translate_he_to_en("בדיקה אשש")
-    # print(translate.translate_he_to_en("בדיקה אשש"))
-    # print(translate.translate_en_to_he("test broo"))
-    # print(Translate().translate_he_to_en("בדיקה אשש"))
-    # print(Translate().translate_en_to_he("I want to eat apple pie and drink hot tea"))
+    print(app.translator.translate_he_to_en("בדיקה אשש"))
+    print(app.translator.translate_en_to_he("test broo"))
    
     cl.user_session.set("chain", app.chat)
-    cl.user_session.set("transalte", translate)
+    cl.user_session.set("app", app)
 
 
 @cl.on_message
 async def on_message(message: cl.Message):
     chain = cl.user_session.get("chain")  # type: LLMChain
-    translate = cl.user_session.get("transalte") 
+    app = cl.user_session.get("app") 
     
-    en_query = translate.translate_he_to_en(message.content)
+    en_query = app.translate.translate_he_to_en(message.content)
 
     cb = cl.AsyncLangchainCallbackHandler()
 
     res = await chain.acall(en_query, callbacks=[cb])
-    answer = translate.translate_en_to_he(res["answer"])
+    answer = app.translate.translate_en_to_he(res["answer"])
     source_documents = res["source_documents"]  # type: List[Document]
 
     text_elements = []  # type: List[cl.Text]

@@ -34,6 +34,5 @@ services:
       - ./models:/models:cached
     command: ["/usr/bin/local-ai"]
 
-  vllm-api:
-    
+
 
