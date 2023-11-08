@@ -42,12 +42,12 @@ async def on_message(message: cl.Message):
     chain = cl.user_session.get("chain")  # type: LLMChain
     app = cl.user_session.get("app") 
     
-    en_query = app.translate.translate_he_to_en(message.content)
+    en_query = app.translator.translate_he_to_en(message.content)
 
     cb = cl.AsyncLangchainCallbackHandler()
 
     res = await chain.acall(en_query, callbacks=[cb])
-    answer = app.translate.translate_en_to_he(res["answer"])
+    answer = app.translator.translate_en_to_he(res["answer"])
     source_documents = res["source_documents"]  # type: List[Document]
 
     text_elements = []  # type: List[cl.Text]

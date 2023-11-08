@@ -81,19 +81,18 @@ class csvQA:
             template=template, input_variables=["context", "question"]
         )
 
-        chain_type_kwargs = {"prompt": PROMPT}
+        # chain_type_kwargs = {"prompt": PROMPT}
         retriever = self.vectordb.as_retriever(
             search_kwargs={"k":6},
-            
             )
         
-        self.chain = RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=retriever,
-            chain_type_kwargs=chain_type_kwargs,
-            verbose=True,
-        )
+        # self.chain = RetrievalQA.from_chain_type(
+        #     llm=self.llm,
+        #     chain_type="stuff",
+        #     retriever=retriever,
+        #     chain_type_kwargs=chain_type_kwargs,
+        #     verbose=True,
+        # )
 
 
         self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
@@ -147,13 +146,13 @@ class csvQA:
 
         return results
     
-    def retreival_qa_chain(self,question,history) -> None:
-        en_question = self.translator.translate_he_to_en(question)
-        res = self.chain({"query":en_question,history:history})
-        print("en:",res["result"])
-        he_result = self.translator.translate_en_to_he(res["result"])
-        print("he:",he_result)
-        return he_result
+    # def retreival_qa_chain(self,question,history) -> None:
+    #     en_question = self.translator.translate_he_to_en(question)
+    #     res = self.chain({"query":en_question,history:history})
+    #     print("en:",res["result"])
+    #     he_result = self.translator.translate_en_to_he(res["result"])
+    #     print("he:",he_result)
+    #     return he_result
     
     def chat_with_history(self,meg:str) -> AIMessage:
         """
