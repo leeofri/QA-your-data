@@ -48,7 +48,7 @@ async def on_message(message: cl.Message):
 
     cb = cl.AsyncLangchainCallbackHandler()
 
-    res = await chain({"question"=en_query, "callbacks"=[cb]})
+    res = await chain({"question":en_query})
     answer = app.translator.translate_en_to_he(res["answer"])
     source_documents = res["source_documents"]  # type: List[Document]
 

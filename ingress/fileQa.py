@@ -23,6 +23,8 @@ load_dotenv()
 
 from langchain.chains import RetrievalQA
 
+redis_collection = os.environ.get("REDIS_COLLECTION", "reports")
+
 class csvQA:
     def __init__(self,config:dict = {}):
         self.config = config
@@ -44,7 +46,7 @@ class csvQA:
         # create the open-source embedding function
         if self.embedding is None:
             self.download_embedding_module()
-        self.vectordb = Redis(index_name="reports",embedding=self.embedding,redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379"))
+        self.vectordb = Redis(index_name=redis_collection,embedding=self.embedding,redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379"))
         self.init_transalte()
 
     # def init_models(self) -> None:
@@ -132,7 +134,7 @@ class csvQA:
             newDoc.metadata["he_text"] = doc.page_content
             translated_docs.append(newDoc)
             
-        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding)
+        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,index_name=redis_collection)
 
     def answer_question(self,question:str) ->str:
         """
