@@ -21,7 +21,7 @@ services:
     ports:
       - 8000:8000
     environment:
-      - DATABASE_URL=redis://redis:6379
+      - REDIS_URL=redis://redis:6379
       - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
 
   # embdding-api:

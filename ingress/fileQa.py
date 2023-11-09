@@ -44,7 +44,7 @@ class csvQA:
         # create the open-source embedding function
         if self.embedding is None:
             self.download_embedding_module()
-        self.vectordb = Redis(index_name="reports",embedding=self.embedding,redis_url=os.environ.get("DATABASE_URL", "redis://localhost:6379"))
+        self.vectordb = Redis(index_name="reports",embedding=self.embedding,redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379"))
         self.init_transalte()
 
     # def init_models(self) -> None:
@@ -132,7 +132,7 @@ class csvQA:
             newDoc.metadata["he_text"] = doc.page_content
             translated_docs.append(newDoc)
             
-        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
+        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding)
 
     def answer_question(self,question:str) ->str:
         """
