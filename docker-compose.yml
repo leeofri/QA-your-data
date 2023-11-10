@@ -47,7 +47,7 @@ services:
             "curl",
             "-X", "POST",
             "-H", "Content-Type: application/json",
-            "-d", "{ \"messages\": [{\"role\": \"user\", \"content\": \"Tell me a story.\"}], \"model\": \"llama-2-7b-chat.ggmlv3.q4_0.bin\", \"stream\": false, \"temperature\": \"2\", \"top_p\": \"1.0\", \"top_k\": \"0\" }",
+            "-d", "{ \"messages\": [{\"role\": \"user\", \"content\": \"Tell me a story.\"}], \"model\": \"mistral-7b-instruct-v0.1.Q5_K_M.gguf\", \"stream\": false, \"temperature\": \"2\", \"top_p\": \"1.0\", \"top_k\": \"0\" }",
             "http://localhost:8000/v1/chat/completions"
         ]
       interval: 5s
