@@ -50,17 +50,16 @@ class csvQA:
         self.init_transalte()
 
     def init_llm(self) -> None:
-        inference_server_url = "http://localhost:8000/v1"
 
         self.llm = OpenAIChat(
-            model_name='mistral-7B-v0.1'
+            model_name='mistral-7B-v0.1',
             temperature=0.8,
             max_tokens=1024,
             top_p=1,
             n_batch=100,
             n_ctx=1024,
             n_threads=32,
-            openai_api_base=inference_server_url
+            openai_api_base=os.environ.get("VLLM_API_BASE","http://localhost:8000/v1"),
             # callback_manager=callback_manager,
             verbose=True
         )
