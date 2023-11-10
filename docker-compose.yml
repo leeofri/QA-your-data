@@ -15,7 +15,7 @@ services:
   langchain-chat-app:
     image: langchain-chat-app:latest
     build: ./
-    command: chainlit run main_chainlid.py
+    command: chainlit run main_chainlid.py --debug
     volumes:
       - ./models/:/modles/
     # depends_on:
