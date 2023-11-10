@@ -53,7 +53,7 @@ class csvQA:
 
         self.llm = OpenAIChat(
             model_name='mistral-7B-v0.1',
-            temperature=0.8,
+            temperature=0.65,
             max_tokens=1024,
             top_p=1,
             n_batch=100,

@@ -29,8 +29,8 @@ async def on_chat_start():
     app.init_embeddings()
     print("start init LLM models ")
     app.init_llm()
-    print("Init redis with reports")
-    app.load_docs_to_vec()
+    # print("Init redis with reports")
+    # app.load_docs_to_vec()
 
     print(app.translator.translate_he_to_en("בדיקה אשש"))
     print(app.translator.translate_en_to_he("test broo"))
