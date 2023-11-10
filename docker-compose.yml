@@ -45,15 +45,12 @@ services:
     healthcheck:
       test: ["CMD",
             "curl",
-            "-X", "POST",
-            "-H", "Content-Type: application/json",
-            "-d", "{ \"messages\": [{\"role\": \"user\", \"content\": \"Tell me a story.\"}], \"model\": \"mistral-7b-instruct-v0.1.Q5_K_M.gguf\", \"stream\": false, \"temperature\": \"2\", \"top_p\": \"1.0\", \"top_k\": \"0\" }",
-            "http://localhost:8000/v1/chat/completions"
+            "http://localhost:8000/v1/models"
         ]
       interval: 5s
       timeout: 1m30s
       retries: 5
-      start_period: 5s    
+      start_period: 10s    
 
 
 
