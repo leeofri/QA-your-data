@@ -22,9 +22,11 @@ from ingress.utiles import Translate
 from ingress.fileQa import csvQA
 import sys
 
+app = csvQA(config={"file_path": "./data/Hebrew_reports.csv"})
+
 @cl.on_chat_start
 async def on_chat_start():
-    app = csvQA(config={"file_path": "./data/Hebrew_reports.csv"})
+    
     print("start init embbeding")
     app.init_embeddings()
     print("start init LLM models ")
@@ -36,14 +38,11 @@ async def on_chat_start():
     print(app.translator.translate_en_to_he("test broo"))
    
     cl.user_session.set("chain", app.chat)
-    cl.user_session.set("app", app)
 
 
 @cl.on_message
 async def on_message(message: cl.Message):
     chain = cl.user_session.get("chain")  # type: LLMChain
-    app = cl.user_session.get("app") 
-    
     en_query = app.translator.translate_he_to_en(message.content)
 
     cb = cl.AsyncLangchainCallbackHandler()
