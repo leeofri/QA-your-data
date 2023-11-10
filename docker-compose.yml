@@ -43,7 +43,7 @@ services:
     stdin_open: true # Equivalent to -it in docker run (interactive terminal)
     tty: true 
     healthcheck:
-      test: [
+      test: ["CMD",
             "curl",
             "-X", "POST",
             "-H", "Content-Type: application/json",
