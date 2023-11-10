@@ -59,7 +59,7 @@ class csvQA:
             n_batch=100,
             n_ctx=1024,
             n_threads=32,
-            openai_api_base=os.environ.get("VLLM_API_BASE","http://localhost:8000/v1"),
+            # openai_api_base=os.environ.get("VLLM_API_BASE","http://localhost:8000/v1"),
             # callback_manager=callback_manager,
             verbose=True
         )

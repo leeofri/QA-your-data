@@ -29,9 +29,9 @@ services:
       - REDIS_URL=redis://redis:6379
       - REDIS_COLLECTION=reports
       - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
-      - OPENAI_API_BASE=https://llm-api:3000
+      - OPENAI_API_BASE=https://llm-api:8000/v1
       - OPENAI_API_KEY="no need just for not exaption"
-      - VLLM_API_BASE=http://localhost:8000/v1
+      # - VLLM_API_BASE=http://localhost:8000/v1
 
   llm-api: # Replace with your desired service name
     image: ghcr.io/chenhunghan/ialacol:latest
