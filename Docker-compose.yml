@@ -19,21 +19,21 @@ services:
     volumes:
       - ./models/:/modles/
     ports:
-      - 8080:8000
+      - "8000:8000"
     environment:
       - REDIS_URL=redis://redis:6379
       - REDIS_COLLECTION=reports
       - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
-      - OPENAI_API_BASE=https://llm-api:8000
+      - OPENAI_API_BASE=https://llm-api:3000
       - OPENAI_API_KEY="no need just for not exaption"
 
   llm-api: # Replace with your desired service name
     image: ghcr.io/chenhunghan/ialacol:latest
     ports:
-      - "8000:8000"
+      - "3000:8000"
     environment:
-      - DEFAULT_MODEL_HG_REPO_ID=mistralai/Mistral-7B-Instruct-v0.1 
-      # - DEFAULT_MODEL_FILE=llama-2-7b-chat.ggmlv3.q4_0.bin
+      - DEFAULT_MODEL_HG_REPO_ID=TheBloke/Mistral-7B-Instruct-v0.1-GGUF
+      - DEFAULT_MODEL_FILE=mistral-7b-instruct-v0.1.Q5_K_M.gguf
     stdin_open: true # Equivalent to -it in docker run (interactive terminal)
     tty: true     
 
