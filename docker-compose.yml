@@ -18,11 +18,11 @@ services:
     command: chainlit run main_chainlid.py
     volumes:
       - ./models/:/modles/
-    depends_on:
-      llm-api:
-        condition: service_healthy
-    links: 
-        - llm-api
+    # depends_on:
+    #   llm-api:
+    #     condition: service_healthy
+    # links: 
+    #     - llm-api
     ports:
       - "8000:8000"
     environment:
@@ -31,6 +31,7 @@ services:
       - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
       - OPENAI_API_BASE=https://llm-api:3000
       - OPENAI_API_KEY="no need just for not exaption"
+      - VLLM_API_BASE=http://localhost:8000/v1
 
   llm-api: # Replace with your desired service name
     image: ghcr.io/chenhunghan/ialacol:latest
@@ -42,12 +43,12 @@ services:
     
     stdin_open: true # Equivalent to -it in docker run (interactive terminal)
     tty: true 
-    healthcheck:
-      test: curl --fail http://localhost:8000/v1/models || exit 1
-      interval: 5s
-      timeout: 1m30s
-      retries: 5
-      start_period: 10s    
+    # healthcheck:
+    #   test: curl --fail http://localhost:000/v1/models || exit 1
+    #   interval: 5s
+    #   timeout: 1m30s
+    #   retries: 5
+    #   start_period: 10s    
 
 
 
