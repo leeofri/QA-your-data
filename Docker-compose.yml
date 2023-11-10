@@ -19,7 +19,7 @@ services:
     volumes:
       - ./models/:/modles/
     ports:
-      - 8000:8080
+      - 8080:8000
     environment:
       - REDIS_URL=redis://redis:6379
       - REDIS_COLLECTION=reports
