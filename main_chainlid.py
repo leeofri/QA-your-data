@@ -47,7 +47,9 @@ async def on_message(message: cl.Message):
 
     cb = cl.AsyncLangchainCallbackHandler()
 
-    res = await chain.arun(en_query,callbacks=[cb])
+    chat = lambda q: chain({"question":q,"callbacks":[cb]})
+
+    res = await chat(en_query)
     answer = app.translator.translate_en_to_he(res["answer"])
     source_documents = res["source_documents"]  # type: List[Document]
 
