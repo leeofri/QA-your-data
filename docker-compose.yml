@@ -43,10 +43,7 @@ services:
     stdin_open: true # Equivalent to -it in docker run (interactive terminal)
     tty: true 
     healthcheck:
-      test: ["CMD",
-            "curl",
-            "http://localhost:8000/v1/models"
-        ]
+      test: curl --fail http://localhost:8000/v1/models || exit 1
       interval: 5s
       timeout: 1m30s
       retries: 5
