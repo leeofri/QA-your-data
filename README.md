@@ -66,3 +66,26 @@ curl http://localhost:8080/v1/chat/completions -H "Content-Type: application/jso
     "messages": [{"role": "user", "content": "How are you?"}],
     "temperature": 0.9 
 }'
+
+
+
+
+To convert the langchain-chat-app service definition from a docker-compose.yml file to a docker run command, you'll need to translate each of the Compose file directives into their docker run command equivalent.
+
+Here is what the docker run command would look like for your service:
+
+docker run -d --name redis \
+-p 6379:6379 \
+--network="host" \
+redis/redis-stack:latest \
+redis-server
+
+docker run -d --name langchain-chat-app \
+  -p 8000:8000 \
+  -v "$(pwd)/models/:/models/" \
+  --network="host" \
+  -e REDIS_URL=redis://localhost:6379 \
+  -e REDIS_COLLECTION=reports \
+  -e MODEL_PATH=/models/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf \
+  langchain-chat-app:latest \
+  chainlit run main_chainlid.py

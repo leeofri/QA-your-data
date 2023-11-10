@@ -8,7 +8,7 @@ from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Redis
 from dotenv import load_dotenv
 from ingress.utiles import Translate
-from langchain.llms import LlamaCpp
+from langchain.llms import LlamaCpp, OpenAIChat
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import (
@@ -49,13 +49,8 @@ class csvQA:
         self.vectordb = Redis(index_name=redis_collection,embedding=self.embedding,redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379"))
         self.init_transalte()
 
-    # def init_models(self) -> None:
-    #     # # OpenAI GPT 3.5 API
-    #     self.llm = ChatOpenAI(temperature=0.)
-
     def init_llm(self) -> None:
-        self.llm = LlamaCpp(
-            model_path=os.environ.get("MODEL_PATH", "/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf"),
+        self.llm = OpenAIChat(
             temperature=0.8,
             max_tokens=1024,
             top_p=1,
@@ -64,7 +59,20 @@ class csvQA:
             n_threads=32,
             # callback_manager=callback_manager,
             verbose=True
-            )
+        )
+        
+        
+        # LlamaCpp(
+        #     model_path=os.environ.get("MODEL_PATH", "/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf"),
+        #     temperature=0.8,
+        #     max_tokens=1024,
+        #     top_p=1,
+        #     n_batch=100,
+        #     n_ctx=1024,
+        #     n_threads=32,
+        #     # callback_manager=callback_manager,
+        #     verbose=True
+        #     )
         
         template = """
         you are army command and control summerize reports system, please answer the question
@@ -87,15 +95,6 @@ class csvQA:
         retriever = self.vectordb.as_retriever(
             search_kwargs={"k":6},
             )
-        
-        # self.chain = RetrievalQA.from_chain_type(
-        #     llm=self.llm,
-        #     chain_type="stuff",
-        #     retriever=retriever,
-        #     chain_type_kwargs=chain_type_kwargs,
-        #     verbose=True,
-        # )
-
 
         self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
 
