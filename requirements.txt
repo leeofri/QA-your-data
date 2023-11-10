@@ -53,7 +53,7 @@ jsonpointer==2.4
 jsonschema==4.19.1
 jsonschema-specifications==2023.7.1
 kubernetes==28.1.0
-langchain==0.0.332
+langchain==0.0.316
 langsmith==0.0.52
 Lazify==0.4.0
 llama_cpp_python==0.2.11
@@ -72,7 +72,7 @@ nodeenv==1.8.0
 numpy==1.26.1
 oauthlib==3.2.2
 onnxruntime==1.16.1
-openai==1.2.2
+openai==0.28.1
 opentelemetry-api==1.20.0
 opentelemetry-exporter-otlp==1.20.0
 opentelemetry-exporter-otlp-proto-common==1.20.0
