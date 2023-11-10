@@ -18,6 +18,11 @@ services:
     command: chainlit run main_chainlid.py
     volumes:
       - ./models/:/modles/
+    depends_on:
+      llm-api:
+        condition: service_healthy
+    links: 
+        - llm-api
     ports:
       - "8000:8000"
     environment:
@@ -34,8 +39,21 @@ services:
     environment:
       - DEFAULT_MODEL_HG_REPO_ID=TheBloke/Mistral-7B-Instruct-v0.1-GGUF
       - DEFAULT_MODEL_FILE=mistral-7b-instruct-v0.1.Q5_K_M.gguf
+    
     stdin_open: true # Equivalent to -it in docker run (interactive terminal)
-    tty: true     
+    tty: true 
+    healthcheck:
+      test: [
+            "curl",
+            "-X", "POST",
+            "-H", "Content-Type: application/json",
+            "-d", "{ \"messages\": [{\"role\": \"user\", \"content\": \"Tell me a story.\"}], \"model\": \"llama-2-7b-chat.ggmlv3.q4_0.bin\", \"stream\": false, \"temperature\": \"2\", \"top_p\": \"1.0\", \"top_k\": \"0\" }",
+            "http://localhost:8000/v1/chat/completions"
+        ]
+      interval: 5s
+      timeout: 1m30s
+      retries: 5
+      start_period: 5s    
 
 
 
