@@ -15,7 +15,7 @@ services:
   langchain-chat-app:
     image: langchain-chat-app:latest
     build: ./
-    command: chainlit run main_chainlid.py --debug
+    command:  python init.py load
     volumes:
       - ./models/:/modles/
     # depends_on:
@@ -28,8 +28,9 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - REDIS_COLLECTION=reports
-      - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
-      - OPENAI_API_BASE=https://llm-api:8000/v1
+      # - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
+      - OPENAI_API_BASE=http://llm-api:8000/v1
+      # - OPENAI_API_BASE=http://host.docker.internal:3000/v1
       - OPENAI_API_KEY="no need just for not exaption"
       # - VLLM_API_BASE=http://localhost:8000/v1
 
@@ -41,9 +42,9 @@ services:
       - DEFAULT_MODEL_HG_REPO_ID=TheBloke/Mistral-7B-Instruct-v0.1-GGUF
       - DEFAULT_MODEL_FILE=mistral-7b-instruct-v0.1.Q5_K_M.gguf
     
-    stdin_open: true # Equivalent to -it in docker run (interactive terminal)
-    tty: true 
-    # healthcheck:
+  #   stdin_open: true # Equivalent to -it in docker run (interactive terminal)
+  #   tty: true 
+  #   # healthcheck:
     #   test: curl --fail http://localhost:000/v1/models || exit 1
     #   interval: 5s
     #   timeout: 1m30s

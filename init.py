@@ -13,6 +13,12 @@ print("check translate module")
 app.init_transalte()
 app.translator.translate_he_to_en("בדיקה אשש")
 app.translator.translate_en_to_he("test broo")
-print("start load_docs_to_vec")
+
+if (len(sys.argv) >=2 and sys.argv[1] == "load"):
+        print("start load_docs_to_vec")
+        app.load_docs_to_vec()
+        
+
+
 
 

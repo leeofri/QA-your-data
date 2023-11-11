@@ -5,11 +5,7 @@ import os
 import json
 
 from langchain.chat_models import ChatOpenAI
-from langchain.schema import (
-    SystemMessage,
-    HumanMessage,
-    AIMessage
-)
+from langchain.schema import SystemMessage, HumanMessage, AIMessage
 
 
 from langchain.schema import StrOutputParser
@@ -24,9 +20,9 @@ import sys
 
 app = csvQA(config={"file_path": "./data/Hebrew_reports.csv"})
 
+
 @cl.on_chat_start
 async def on_chat_start():
-    
     print("start init embbeding")
     app.init_embeddings()
     print("start init LLM models ")
@@ -36,8 +32,8 @@ async def on_chat_start():
 
     print(app.translator.translate_he_to_en("בדיקה אשש"))
     print(app.translator.translate_en_to_he("test broo"))
-   
-    cl.user_session.set("chain", app.chat)
+
+    cl.user_session.set("chain", app.get_chat())
 
 
 @cl.on_message
@@ -45,11 +41,11 @@ async def on_message(message: cl.Message):
     chain = cl.user_session.get("chain")  # type: LLMChain
     en_query = app.translator.translate_he_to_en(message.content)
 
-    cb = cl.AsyncLangchainCallbackHandler()
+    res = await cl.make_async(chain)(
+        en_query,
+        callbacks=[cl.LangchainCallbackHandler()],
+    )
 
-    chat = lambda q: chain(question=q,callbacks=[cb])
-
-    res = await chat(en_query)
     answer = app.translator.translate_en_to_he(res["answer"])
     source_documents = res["source_documents"]  # type: List[Document]
 
@@ -71,12 +67,6 @@ async def on_message(message: cl.Message):
 
     await cl.Message(content=answer, elements=text_elements).send()
 
-
-
-
-
-
-
     # run = lambda question,callbacks : chain({"question":question})
 
     # res = await cl.make_async(run)(
@@ -86,4 +76,3 @@ async def on_message(message: cl.Message):
     # res["answer"] = translate.translate_en_to_he(res["answer"])
 
     # await cl.Message(content=res).send()
-

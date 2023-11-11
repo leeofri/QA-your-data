@@ -77,6 +77,7 @@ class csvQA:
         #     verbose=True
         #     )
         
+    def get_chat(self):
         template = """
         you are army command and control summerize reports system, please answer the question
         following this rules when generating and answer:
@@ -99,15 +100,14 @@ class csvQA:
             search_kwargs={"k":6},
             )
 
-        self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
+        memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
 
-        self.chat = ConversationalRetrievalChain.from_llm( 
+        return ConversationalRetrievalChain.from_llm( 
             self.llm,  
             retriever, 
-            memory=self.memory,
+            memory=memory,
             verbose=True,
             return_source_documents=True,
-            callbacks=[]
             )
         
     def load_docs_to_vec(self,force_reload:bool= False) -> None:
