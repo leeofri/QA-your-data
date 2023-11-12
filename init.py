@@ -7,7 +7,7 @@ app = csvQA(config={"file_path": "./data/Hebrew_reports.csv"})
 
 
 print("start init embbeding")
-app.download_embedding_module()
+app.init_embeddings()
 
 print("check translate module")
 app.init_transalte()
