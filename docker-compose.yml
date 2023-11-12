@@ -20,6 +20,9 @@ services:
        environment:
          - REDIS_URL=redis://redis:6379
          - REDIS_COLLECTION=reports
+       profiles:
+         - initialize_database
+
 
   langchain-chat-app:
     image: langchain-chat-app:latest
