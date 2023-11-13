@@ -55,7 +55,7 @@ services:
   
   aim:
     image: aimstack/aim
-    command: ui
+    command: ui --host 0.0.0.0 --port 43800
     ports:
       - 43800:43800
     volumes:
