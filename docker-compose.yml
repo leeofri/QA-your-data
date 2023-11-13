@@ -3,8 +3,8 @@ services:
     image: redis/redis-stack-server:latest
     ports:
       - "6379:6379"
-    # volumes:
-    #     - redis_data:/data
+    volumes:
+        - ./data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "localhost", "-p", "6379", "ping"]
       interval: 2s
@@ -13,13 +13,13 @@ services:
       start_period: 5s
 
   # langchain-chat-app-init:
-  #       image: langchain-chat-app:latest
-  #       command: python init.py load --debug
-  #       volumes:
-  #         - ./models/:/modles/
-  #       environment:
-  #         - REDIS_URL=redis://redis:6379
-  #         - REDIS_COLLECTION=reports
+  #   image: langchain-chat-app:latest
+  #   command: python init.py load --debug
+  #   volumes:
+  #     - ./models/:/modles/
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379
+  #     - REDIS_COLLECTION=reports
         
 
   langchain-chat-app:
@@ -28,6 +28,7 @@ services:
     command: chainlit run main_chainlid.py --debug
     volumes:
       - ./models/:/modles/
+      - ./aim:/opt/aim
     # depends_on:
     #   llm-api:
     #     condition: service_healthy
@@ -38,29 +39,27 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
       - REDIS_COLLECTION=reports
-      # - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
+      - MODEL_PATH=/modles/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf
       - OPENAI_API_BASE=http://llm-api:8000/v1
+      - OPENAI_API_EMBDDING_BASE=http://embdding-api:8000/v1
       # - OPENAI_API_BASE=http://host.docker.internal:3000/v1
       - OPENAI_API_KEY="no need just for not exaption"
       # - VLLM_API_BASE=http://localhost:8000/v1
 
-  llm-api: # Replace with your desired service name
-    image: ghcr.io/chenhunghan/ialacol:latest
-    ports:
-      - "3000:8000"
-    environment:
-      - DEFAULT_MODEL_HG_REPO_ID=TheBloke/Mistral-7B-Instruct-v0.1-GGUF
-      - DEFAULT_MODEL_FILE=mistral-7b-instruct-v0.1.Q5_K_M.gguf
-    
-  #   stdin_open: true # Equivalent to -it in docker run (interactive terminal)
-  #   tty: true 
-  #   # healthcheck:
-    #   test: curl --fail http://localhost:000/v1/models || exit 1
-    #   interval: 5s
-    #   timeout: 1m30s
-    #   retries: 5
-    #   start_period: 10s    
-
-
-
-
+  # llm-api: # Replace with your desired service name
+  #   image: ghcr.io/chenhunghan/ialacol:latest
+  #   ports:
+  #     - "3000:8000"
+  #   environment:
+  #     - DEFAULT_MODEL_HG_REPO_ID=TheBloke/Mistral-7B-Instruct-v0.1-GGUF
+  #     - DEFAULT_MODEL_FILE=mistral-7b-instruct-v0.1.Q5_K_M.gguf
+  
+  # aim:
+  #   image: aimstack/aim
+  #   command: ui --host 0.0.0.0 --port 43800
+  #   ports:
+  #     - 43800:43800
+  #   volumes:
+  #     - ./aim:/opt/aim
+  
+  

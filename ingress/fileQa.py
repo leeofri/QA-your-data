@@ -37,16 +37,14 @@ class csvQA:
                             model="your-embeddings-model-name",
                             openai_api_base=os.environ.get("OPENAI_API_EMBDDING_BASE","http://localhost:8000/v1"),
                         )
-        print("embdding cache folder:",self.embedding.cache_folder)
+        # print("embdding cache folder:",self.embedding.cache_folder)
 
     def init_transalte(self):
         self.translator = Translate()
 
     def init_embeddings(self) -> None:
-        # OPensource local emmbeding
-        # create the open-source embedding function
-        # if self.embedding is None:
-        #     self.download_embedding_module()
+        if self.embedding is None:
+            self.download_embedding_module()
         self.vectordb = Redis(index_name=redis_collection,embedding=self.embedding,redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379"))
         self.init_transalte()
 

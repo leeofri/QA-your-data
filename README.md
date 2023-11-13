@@ -89,3 +89,9 @@ docker run -d --name langchain-chat-app \
   -e MODEL_PATH=/models/mistral-7B-v0.1/mistral-7b-instruct-v0.1.Q4_0.gguf \
   langchain-chat-app:latest \
   chainlit run main_chainlid.py
+
+
+  docker run --rm -it -p 8000:8000 \                                 
+     -e DEFAULT_MODEL_HG_REPO_ID="TheBloke/Mistral-7B-Instruct-v0.1-GGUF" \
+     -e DEFAULT_MODEL_FILE="mistral-7b-instruct-v0.1.Q4_0.gguf" \
+     ghcr.io/chenhunghan/ialacol:latest

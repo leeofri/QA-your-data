@@ -16,13 +16,8 @@ COPY requirements.txt .
 # Here --no-cache-dir is used to keep the Docker image as small as possible
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN argospm install translate-en_he && argospm install translate-he_en
-RUN echo $(ls ~/.local/cache/argos-translate)
 # Copy the current directory contents into the container at /usr/src/app
 COPY . .
-
-#init emmbeding on run time
-RUN python init.py
 
 VOLUME [ "/modules" ]
 EXPOSE 8000
