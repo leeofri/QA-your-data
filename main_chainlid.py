@@ -39,7 +39,7 @@ async def on_message(message: cl.Message):
 
     # Init the callback
     aim_callback = AimCallbackHandler(
-        repo=".",
+        repo="/aim",
         experiment_name="v0.0.1",
     )
 
