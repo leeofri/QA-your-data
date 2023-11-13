@@ -3,8 +3,8 @@ services:
     image: redis/redis-stack-server:latest
     ports:
       - "6379:6379"
-    # volumes:
-    #     - redis_data:/data
+    volumes:
+        - ./data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "-h", "localhost", "-p", "6379", "ping"]
       interval: 2s
@@ -45,13 +45,13 @@ services:
       - OPENAI_API_KEY="no need just for not exaption"
       # - VLLM_API_BASE=http://localhost:8000/v1
 
-  # llm-api: # Replace with your desired service name
-  #   image: ghcr.io/chenhunghan/ialacol:latest
-  #   ports:
-  #     - "3000:8000"
-  #   environment:
-  #     - DEFAULT_MODEL_HG_REPO_ID=TheBloke/Mistral-7B-Instruct-v0.1-GGUF
-  #     - DEFAULT_MODEL_FILE=mistral-7b-instruct-v0.1.Q5_K_M.gguf
+  llm-api: # Replace with your desired service name
+    image: ghcr.io/chenhunghan/ialacol:latest
+    ports:
+      - "3000:8000"
+    environment:
+      - DEFAULT_MODEL_HG_REPO_ID=TheBloke/Mistral-7B-Instruct-v0.1-GGUF
+      - DEFAULT_MODEL_FILE=mistral-7b-instruct-v0.1.Q5_K_M.gguf
   
   aim:
     image: aimstack/aim
