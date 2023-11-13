@@ -3,12 +3,11 @@ import os
 import re
 from langchain.docstore.document import Document
 from langchain.document_loaders import CSVLoader
-from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter, MarkdownTextSplitter, RecursiveCharacterTextSplitter, Language
 from langchain.prompts import PromptTemplate
 from langchain.vectorstores import Redis
 from dotenv import load_dotenv
 from ingress.utiles import Translate
-from langchain.llms import LlamaCpp, OpenAIChat
+from langchain.llms import OpenAIChat
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import (
@@ -16,12 +15,10 @@ from langchain.schema import (
     BaseMessage
 )
 
-from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain.embeddings import OpenAIEmbeddings
 debug = True
 
 load_dotenv()
-
-from langchain.chains import RetrievalQA
 
 redis_collection = os.environ.get("REDIS_COLLECTION", "reports")
 
@@ -35,7 +32,11 @@ class csvQA:
         self.translator = None
 
     def download_embedding_module(self):
-        self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.embedding = OpenAIEmbeddings(
+                            deployment="your-embeddings-deployment-name",
+                            model="your-embeddings-model-name",
+                            openai_api_base=os.environ.get("OPENAI_API_EMBDDING_BASE","http://localhost:8000/v1"),
+                        )
         print("embdding cache folder:",self.embedding.cache_folder)
 
     def init_transalte(self):
@@ -44,8 +45,8 @@ class csvQA:
     def init_embeddings(self) -> None:
         # OPensource local emmbeding
         # create the open-source embedding function
-        if self.embedding is None:
-            self.download_embedding_module()
+        # if self.embedding is None:
+        #     self.download_embedding_module()
         self.vectordb = Redis(index_name=redis_collection,embedding=self.embedding,redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379"))
         self.init_transalte()
 
