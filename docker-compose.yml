@@ -55,7 +55,7 @@ services:
   
   aim:
     image: aimstack/aim
-    command: up
+    command: ui
     ports:
       - 53800:53800
     volumes:
