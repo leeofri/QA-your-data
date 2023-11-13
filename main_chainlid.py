@@ -1,16 +1,12 @@
 import resource
 
 from dotenv import load_dotenv
-import os
-import json
+
+from langchain.callbacks import AimCallbackHandler
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
 
-
-from langchain.schema import StrOutputParser
-from langchain.schema.runnable import Runnable
-from langchain.schema.runnable.config import RunnableConfig
 
 import chainlit as cl
 from ingress.utiles import Translate
@@ -41,9 +37,15 @@ async def on_message(message: cl.Message):
     chain = cl.user_session.get("chain")  # type: LLMChain
     en_query = app.translator.translate_he_to_en(message.content)
 
+    # Init the callback
+    aim_callback = AimCallbackHandler(
+        repo=".",
+        experiment_name="v0.0.1",
+    )
+
     res = await cl.make_async(chain)(
         en_query,
-        callbacks=[cl.LangchainCallbackHandler()],
+        callbacks=[cl.LangchainCallbackHandler(), aim_callback],
     )
 
     answer = app.translator.translate_en_to_he(res["answer"])
@@ -66,6 +68,7 @@ async def on_message(message: cl.Message):
             answer += "\nלא נמצאו דיווחים תואמים"
 
     await cl.Message(content=answer, elements=text_elements).send()
+    aim_callback.flush_tracker(langchain_asset=chain, reset=False, finish=True)
 
     # run = lambda question,callbacks : chain({"question":question})
 
