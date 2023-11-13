@@ -45,7 +45,7 @@ async def on_message(message: cl.Message):
 
     res = await cl.make_async(chain)(
         en_query,
-        callbacks=[cl.LangchainCallbackHandler(), aim_callback],
+        callbacks=[aim_callback,cl.LangchainCallbackHandler()],
     )
 
     answer = app.translator.translate_en_to_he(res["answer"])
