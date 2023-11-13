@@ -1,15 +1,13 @@
 import json
 import os
 import re
-from typing import Iterable, List
 from langchain.docstore.document import Document
 from langchain.document_loaders import CSVLoader
-from langchain.text_splitter import CharacterTextSplitter, TokenTextSplitter, MarkdownTextSplitter, RecursiveCharacterTextSplitter, Language
 from langchain.prompts import PromptTemplate
-from langchain.vectorstores import Chroma
+from langchain.vectorstores import Redis
 from dotenv import load_dotenv
 from ingress.utiles import Translate
-from langchain.llms import LlamaCpp
+from langchain.llms import OpenAIChat
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain.schema import (
@@ -17,13 +15,12 @@ from langchain.schema import (
     BaseMessage
 )
 
-from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
+from langchain.embeddings import OpenAIEmbeddings
 debug = True
 
 load_dotenv()
 
-from langchain.chains import RetrievalQA
-
+redis_collection = os.environ.get("REDIS_COLLECTION", "reports")
 
 class csvQA:
     def __init__(self,config:dict = {}):
@@ -34,37 +31,60 @@ class csvQA:
         self.qa = None
         self.translator = None
 
-    def init_embeddings(self) -> None:
-        # OPensource local emmbeding
-        # create the open-source embedding function
-        self.embedding =  SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-        self.vectordb = Chroma(embedding_function=self.embedding,persist_directory='./data')
+    def download_embedding_module(self):
+        self.embedding = OpenAIEmbeddings(
+                            deployment="your-embeddings-deployment-name",
+                            model="your-embeddings-model-name",
+                            openai_api_base=os.environ.get("OPENAI_API_EMBDDING_BASE","http://localhost:8000/v1"),
+                        )
+        # print("embdding cache folder:",self.embedding.cache_folder)
+
+    def init_transalte(self):
         self.translator = Translate()
 
-    # def init_models(self) -> None:
-    #     # # OpenAI GPT 3.5 API
-    #     self.llm = ChatOpenAI(temperature=0.)
+    def init_embeddings(self) -> None:
+        if self.embedding is None:
+            self.download_embedding_module()
+        self.vectordb = Redis(index_name=redis_collection,embedding=self.embedding,redis_url=os.environ.get("REDIS_URL", "redis://localhost:6379"))
+        self.init_transalte()
 
     def init_llm(self) -> None:
-        self.llm = LlamaCpp(
-            model_path="/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf",
-            temperature=0.5,
-            max_tokens=512,
+
+        self.llm = OpenAIChat(
+            model_name='mistral-7B-v0.1',
+            temperature=0.65,
+            max_tokens=1024,
             top_p=1,
-            n_batch=1,
+            n_batch=100,
             n_ctx=1024,
+            n_threads=32,
+            # openai_api_base=os.environ.get("VLLM_API_BASE","http://localhost:8000/v1"),
             # callback_manager=callback_manager,
             verbose=True
-            )
+        )
         
+        
+        # LlamaCpp(
+        #     model_path=os.environ.get("MODEL_PATH", "/Users/admin/Library/Application Support/nomic.ai/GPT4All/mistral-7b-instruct-v0.1.Q4_0.gguf"),
+        #     temperature=0.8,
+        #     max_tokens=1024,
+        #     top_p=1,
+        #     n_batch=100,
+        #     n_ctx=1024,
+        #     n_threads=32,
+        #     # callback_manager=callback_manager,
+        #     verbose=True
+        #     )
+        
+    def get_chat(self):
         template = """
-        you are army command and control summerize events system, please answer the question
+        you are army command and control summerize reports system, please answer the question
         following this rules when generating and answer:
-        - Use only the data from the context, the context is list of events
-        - the answer should contain a update about the events in the context in chronological order
+        - Use only the data from the reports log
+        - the answer contain event from reports log in chronological order
         - mention the Sender and Destination of the source events in the answer
         =========
-        context : {context}
+        reports log : {context}
         Quesion of the user : {question}
         =========
        answer: 
@@ -74,28 +94,17 @@ class csvQA:
             template=template, input_variables=["context", "question"]
         )
 
-        chain_type_kwargs = {"prompt": PROMPT}
+        # chain_type_kwargs = {"prompt": PROMPT}
         retriever = self.vectordb.as_retriever(
             search_kwargs={"k":6},
-            
             )
 
-        self.chain = RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=retriever,
-            chain_type_kwargs=chain_type_kwargs,
-            verbose=True,
+        memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
 
-        )
-
-
-        self.memory = ConversationBufferMemory(memory_key="chat_history", output_key='answer',input_key='question',return_messages=True)
-
-        self.chat = ConversationalRetrievalChain.from_llm( 
+        return ConversationalRetrievalChain.from_llm( 
             self.llm,  
             retriever, 
-            memory=self.memory,
+            memory=memory,
             verbose=True,
             return_source_documents=True,
             )
@@ -107,7 +116,7 @@ class csvQA:
 
         file_path = self.config.get("file_path",None)
         # vector_db_host = self.config.get("vector_db_host","localhost")
-        documents = CSVLoader(file_path=file_path).load()
+        documents = CSVLoader(file_path=file_path,).load()
             
         print("Loaded {0} documents".format(len(documents)))
 
@@ -126,8 +135,7 @@ class csvQA:
             newDoc.metadata["he_text"] = doc.page_content
             translated_docs.append(newDoc)
             
-
-        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,persist_directory='./data')
+        self.vectordb.from_documents(documents=translated_docs,embedding=self.embedding,index_name=redis_collection)
 
     def answer_question(self,question:str) ->str:
         """
@@ -141,13 +149,13 @@ class csvQA:
 
         return results
     
-    def retreival_qa_chain(self,question,history) -> None:
-        en_question = self.translator.translate_he_to_en(question)
-        res = self.chain({"query":en_question,history:history})
-        print("en:",res["result"])
-        he_result = self.translator.translate_en_to_he(res["result"])
-        print("he:",he_result)
-        return he_result
+    # def retreival_qa_chain(self,question,history) -> None:
+    #     en_question = self.translator.translate_he_to_en(question)
+    #     res = self.chain({"query":en_question,history:history})
+    #     print("en:",res["result"])
+    #     he_result = self.translator.translate_en_to_he(res["result"])
+    #     print("he:",he_result)
+    #     return he_result
     
     def chat_with_history(self,meg:str) -> AIMessage:
         """
