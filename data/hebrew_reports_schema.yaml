@@ -1,0 +1,25 @@
+index:
+  name: RunningNumber
+
+fields:
+  # define tag fields
+  text:
+  - name: Sender
+  - name: Location
+  - name: Time
+  - name: Message
+  - name: en_text
+  - name: en_location
+  # define numeric fields
+  numeric:
+  - name: RunningNumber
+  # define vector fields
+  vector:
+  - name: en_vector
+    dims: 384
+    algorithm: hnsw
+    distance_metric: cosine
+  - name: en_loaction_vector
+    dims: 384
+    algorithm: hnsw
+    distance_metric: cosine
