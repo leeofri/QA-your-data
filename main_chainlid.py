@@ -2,7 +2,7 @@ import resource
 
 from dotenv import load_dotenv
 
-from langchain.callbacks import AimCallbackHandler
+from utils.aim_callback import AimCallbackHandler
 
 from langchain.chat_models import ChatOpenAI
 from langchain.schema import SystemMessage, HumanMessage, AIMessage
